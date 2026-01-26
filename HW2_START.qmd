@@ -10,7 +10,7 @@ date: "January 26, 2026"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, eval=FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 ### Assignment instructions
@@ -126,7 +126,7 @@ We will start by evaluating the 2007 survey (cross-sectional) data. Treatment is
 
 > Goal: Match precincts using pre-treatment covariates and then estimate the effect of proposed wind turbines on incumbent vote share.
 
-**2A.** Load data for matching
+#### **2A.** Load data for matching
 
 1. Read in data file `stokes15_survey2007.csv`
 2. Code `precinct_id` and `district_id` as factors
@@ -200,15 +200,22 @@ Learning goals:
 ```{r}
 set.seed(2412026)
 
-match_model <- 
+match_model <- matchit(
+     # Treatment_indicator ~  Pre_treatment_covariates
+  data = match_data, 
+  method = "nearest",       # Nearest neighbor matching
+  distance = "mahalanobis", # Mahalanobis distance
+  ratio = 1,                # Match one control unit to one treatment unit (1:1 matching)
+  replace = FALSE           # Control observations are not replaced
+)
 
 # Extract matched data
-matched_data <- match.data()
+matched_data <- match.data(match_model)
 
 ```
 
 ```{r}
-# summary()
+summary(match_model)
 ```
 
 **2C.Q1** Using the `summary()` output: Which covariate had the largest and smallest `Std. Mean Diff.` before matching. Next, compare largest/smallest `Std. Mean Diff.` after matching. 
@@ -218,7 +225,7 @@ matched_data <- match.data()
 
 ------------------------------------------------------------------------
 
-### 2D. Create a "love plot" using `love.plot()` ❤️
+#### 2D. Create a "love plot" using `love.plot()` ❤️
 
 📜 [Documentation - cobalt](https://ngreifer.github.io/cobalt/)
 
@@ -233,14 +240,15 @@ matched_data <- match.data()
 
 ```{r}
 
-# new_names <- data.frame(
-#     old = c("log_home_val_07", "p_uni_degree", "log_median_inc", "log_pop_denc"),
-#     new = c("Home Value (log)", "Percent University Degree", "Median Income (log)", "Population Density (log)"))
-# 
-# # Love plot
-# love.plot(match_model, stats = "mean.diffs", 
-#           thresholds = c(m = 0.1), 
-#           var.names = new_names)
+new_names <- data.frame(
+    old = c("log_home_val_07", "p_uni_degree", "log_median_inc", "log_pop_denc"),
+    new = c("Home Value (log)", "Percent University Degree",
+            "Median Income (log)", "Population Density (log)"))
+
+# Love plot
+love.plot(match_model, stats = "mean.diffs",
+          thresholds = c(m = 0.1),
+          var.names = new_names)
 
 ```
 
@@ -254,9 +262,11 @@ matched_data <- match.data()
 
 ------------------------------------------------------------------------
 
-#### 2E. Propensity score matching (PSM) 
+#### 2E. Propensity Score Matching (PSM) 
 
-**Instructions:** Run 1:1 nearest-neighbor propensity score matching (logistic method). 
+ - Estimate 1:1 nearest-neighbor Propensity Score Matching 
+ - Same code as above except change `distance = "logit"`  
+ 
 ```{r}
 
 set.seed(2412026)
@@ -267,7 +277,7 @@ propensity_scores <-
 
 ------------------------------------------------------------------------
 
-### Create table displaying covariate balance using `cobalt::bal.tab()`
+#### Create table displaying covariate balance using `cobalt::bal.tab()`
 
 📜 [Documentation - cobalt](https://ngreifer.github.io/cobalt/)
 
@@ -275,7 +285,8 @@ Use `bal.tab()` to report balance before and after matching.
 
 ```{r}
 
-# bal.tab( *** ) 
+bal.tab(propensity_scores, 
+        var.names = new_names) 
 
 ```
 
@@ -283,10 +294,11 @@ Use `bal.tab()` to report balance before and after matching.
 
 *Response:* _________________________
 
+------------------------------------------------------------------------
 
-### 2F. Estimate an effect in the matched sample
+#### 2F. Estimate an effect in the matched sample
 
-Using the matched sample (Mahalanobis method), estimate the effect of treatment on the change in incumbent vote share (`change_liberal`).
+Using the matched data (Mahalanobis method), estimate the effect of treatment on the change in incumbent vote share (`change_liberal`).
 
 ```{r}
 
@@ -315,7 +327,8 @@ reg_match <-
 
 ------------------------------------------------------------------------
 
-**3A:** Read in the panel data. Code variables `precinct_id` and `year` as factors. 
+#### **3A:** Read in the panel data + code variables `precinct_id` and `year` as factors 
+
 ```{r}
 
 panel_data <- 
@@ -342,12 +355,20 @@ panel_data <-
 ```{r}
 
 panel_data %>%
+  group_by(precinct_id) %>%
+  summarise(
+    ever_proposed    = any(proposed_turbine == 1, na.rm = TRUE),
+    ever_operational = any(operational_turbine == 1, na.rm = TRUE),
+    .groups = "drop") %>%
+  summarise(
+    n_ever_proposed    = sum(ever_proposed),
+    n_ever_operational = sum(ever_operational))
 
 ```
 
 ------------------------------------------------------------------------
 
-**3B.** Plot and evaluate parallel trends: Replicate `Figure.2` (Stokes, 2015)
+#### **3B.** Plot and evaluate parallel trends: Replicate `Figure.2` (Stokes, 2015)
 
 1. Create indicators for whether each precinct is ever treated by 2011 (`treat_p`, `treat_o`; separate indicator for proposals and operational turbines).
 2. Plot mean incumbent vote share by year for treated vs control precincts (with 95% CIs). 
@@ -357,13 +378,55 @@ Step 1: Prepare data
 ```{r}
 
 trends_data <- panel_data %>%
+  group_by(precinct_id) %>%
+  mutate(
+    treat_p = as.integer(any(proposed_turbine == 1, na.rm = TRUE)),  # ever proposed (in any year)
+    treat_o = as.integer(any(operational_turbine == 1, na.rm = TRUE))) %>% # ever operational (in any year)
+  ungroup() %>% 
+  pivot_longer(c(treat_p, treat_o),
+               names_to = "turbine_type", values_to = "treat") %>% 
+  mutate(
+      turbine_type = factor(turbine_type,
+                            levels = c("treat_p", "treat_o"),
+                            labels = c("Proposed turbines", "Operational turbines")),  
+    status = if_else(treat == 1, "Treated", "Control"),
+    year   = factor(year))
 
 ```
 
 Step 2: Create trends plot 
 ```{r}
 
-# Add plot code
+pd <- position_dodge(width = 0.15)
+
+trends_data %>%
+  group_by(turbine_type, status, year) %>%
+  summarise(
+    mean = mean(perc_lib, na.rm = TRUE),
+    n    = sum(!is.na(perc_lib)),
+    se   = sd(perc_lib, na.rm = TRUE) / sqrt(n), 
+    ci   = qt(.975, df = pmax(n - 1, 1)) * se,
+    .groups = "drop") %>%
+ggplot(aes(year, mean, color = status, group = status)) +
+  geom_line(position = pd, linewidth = 1.2) +
+  geom_point(position = pd, size = 2.6) +
+  geom_errorbar(
+    aes(ymin = mean - ci, ymax = mean + ci),
+    position = pd, width = .12, linewidth = .7, color = "black") +
+  facet_wrap(~ turbine_type, nrow = 1) +
+  scale_color_manual(values = c(Control = "#0072B2", Treated = "#B22222")) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  coord_cartesian(ylim = c(.20, .57)) +
+  labs(
+    title = "Figure 2. Trends in the Governing Party’s Vote Share",
+    x = "Election Year",
+    y = "Liberal Party Vote Share",
+    color = NULL) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold"))
 
 ```
 
@@ -417,7 +480,9 @@ sample_40_precincts <- panel_data %>%
 
 ```
 
-**3C:** Estimate a fixed effects model using `lm()` with fixed effects added for `precinct` and `year`
+------------------------------------------------------------------------
+
+#### **3C:** Estimate a fixed effects model using `lm()` with fixed effects added for `precinct` and `year` using the sample of 40 precincts just created.
 
 ```{r}
 model1_ff <- 
@@ -449,7 +514,7 @@ model1_ff <-
 
 ------------------------------------------------------------------------
 
-**3D.** Now using the full sample, estimate the treatment effect of wind turbine proposals on incumbent vote share. Use `feols()` from the `{fixest}` package to estimate the fixed effects.
+#### **3D.** Now using the full sample, estimate the treatment effect of wind turbine proposals on incumbent vote share. Use `feols()` from the `{fixest}` package to estimate the fixed effects.
 
 See vignette here: [fixest walkthrough](https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html#11_Estimation)
 
@@ -468,7 +533,7 @@ In panel data settings, why is clustering by precinct important (i.e., `cluster 
 
 ------------------------------------------------------------------------
 
-**3E.** Estimate the treatment effect of *operational wind turbines* on incumbent vote share. Use the same approach as the previous model.
+#### **3E.** Estimate the treatment effect of *operational wind turbines* on incumbent vote share. Use the same approach as the previous model.
 
 ```{r}
 

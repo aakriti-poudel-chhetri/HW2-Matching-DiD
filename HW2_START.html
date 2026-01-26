@@ -247,7 +247,8 @@ window.Quarto = {
 <blockquote class="blockquote">
 <p>Goal: Match precincts using pre-treatment covariates and then estimate the effect of proposed wind turbines on incumbent vote share.</p>
 </blockquote>
-<p><strong>2A.</strong> Load data for matching</p>
+<section id="a.-load-data-for-matching" class="level4">
+<h4 class="anchored" data-anchor-id="a.-load-data-for-matching"><strong>2A.</strong> Load data for matching</h4>
 <ol type="1">
 <li>Read in data file <code>stokes15_survey2007.csv</code></li>
 <li>Code <code>precinct_id</code> and <code>district_id</code> as factors</li>
@@ -259,6 +260,7 @@ window.Quarto = {
 <p><strong>2A.Q1</strong> Intuition check: <strong>Why match?</strong> Explain rationale for using this method.</p>
 <p><em>Response:</em> _________________________</p>
 <hr>
+</section>
 <section id="b.-check-imbalance-before-matching" class="level4">
 <h4 class="anchored" data-anchor-id="b.-check-imbalance-before-matching"><strong>2B.</strong> Check imbalance (before matching)</h4>
 <ul>
@@ -312,20 +314,26 @@ window.Quarto = {
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2412026</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>match_model <span class="ot">&lt;-</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract matched data</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>matched_data <span class="ot">&lt;-</span> <span class="fu">match.data</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>match_model <span class="ot">&lt;-</span> <span class="fu">matchit</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>     <span class="co"># Treatment_indicator ~  Pre_treatment_covariates</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> match_data, </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"nearest"</span>,       <span class="co"># Nearest neighbor matching</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">distance =</span> <span class="st">"mahalanobis"</span>, <span class="co"># Mahalanobis distance</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">ratio =</span> <span class="dv">1</span>,                <span class="co"># Match one control unit to one treatment unit (1:1 matching)</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">replace =</span> <span class="cn">FALSE</span>           <span class="co"># Control observations are not replaced</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract matched data</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>matched_data <span class="ot">&lt;-</span> <span class="fu">match.data</span>(match_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summary()</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(match_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>2C.Q1</strong> Using the <code>summary()</code> output: Which covariate had the largest and smallest <code>Std. Mean Diff.</code> before matching. Next, compare largest/smallest <code>Std. Mean Diff.</code> after matching.</p>
 <p><em>Response:</em> _________________________</p>
 <hr>
-</section>
-<section id="d.-create-a-love-plot-using-love.plot" class="level3">
-<h3 class="anchored" data-anchor-id="d.-create-a-love-plot-using-love.plot">2D. Create a “love plot” using <code>love.plot()</code> ❤️</h3>
+<section id="d.-create-a-love-plot-using-love.plot" class="level4">
+<h4 class="anchored" data-anchor-id="d.-create-a-love-plot-using-love.plot">2D. Create a “love plot” using <code>love.plot()</code> ❤️</h4>
 <p>📜 <a href="https://ngreifer.github.io/cobalt/">Documentation - cobalt</a></p>
 <ul>
 <li>Plot mean differences for data before &amp; after matching across all pre-treatment covariates</li>
@@ -338,25 +346,30 @@ window.Quarto = {
 <li>In love plot display <code>mean.diffs</code></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># new_names &lt;- data.frame(</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#     old = c("log_home_val_07", "p_uni_degree", "log_median_inc", "log_pop_denc"),</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#     new = c("Home Value (log)", "Percent University Degree", "Median Income (log)", "Population Density (log)"))</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># # Love plot</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># love.plot(match_model, stats = "mean.diffs", </span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#           thresholds = c(m = 0.1), </span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#           var.names = new_names)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>new_names <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">old =</span> <span class="fu">c</span>(<span class="st">"log_home_val_07"</span>, <span class="st">"p_uni_degree"</span>, <span class="st">"log_median_inc"</span>, <span class="st">"log_pop_denc"</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">new =</span> <span class="fu">c</span>(<span class="st">"Home Value (log)"</span>, <span class="st">"Percent University Degree"</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Median Income (log)"</span>, <span class="st">"Population Density (log)"</span>))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Love plot</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">love.plot</span>(match_model, <span class="at">stats =</span> <span class="st">"mean.diffs"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">thresholds =</span> <span class="fu">c</span>(<span class="at">m =</span> <span class="fl">0.1</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>          <span class="at">var.names =</span> new_names)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>2D.Q1</strong> Interpret the love plot in your own words:</p>
 <p><em>Response:</em> _________________________</p>
 <hr>
 </section>
+</section>
 <section id="propensity-score-matching" class="level3">
 <h3 class="anchored" data-anchor-id="propensity-score-matching">Propensity score matching</h3>
 <hr>
 <section id="e.-propensity-score-matching-psm" class="level4">
-<h4 class="anchored" data-anchor-id="e.-propensity-score-matching-psm">2E. Propensity score matching (PSM)</h4>
-<p><strong>Instructions:</strong> Run 1:1 nearest-neighbor propensity score matching (logistic method).</p>
+<h4 class="anchored" data-anchor-id="e.-propensity-score-matching-psm">2E. Propensity Score Matching (PSM)</h4>
+<ul>
+<li>Estimate 1:1 nearest-neighbor Propensity Score Matching</li>
+<li>Same code as above except change <code>distance = "logit"</code></li>
+</ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">2412026</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -364,20 +377,21 @@ window.Quarto = {
 </div>
 <hr>
 </section>
-</section>
-<section id="create-table-displaying-covariate-balance-using-cobaltbal.tab" class="level3">
-<h3 class="anchored" data-anchor-id="create-table-displaying-covariate-balance-using-cobaltbal.tab">Create table displaying covariate balance using <code>cobalt::bal.tab()</code></h3>
+<section id="create-table-displaying-covariate-balance-using-cobaltbal.tab" class="level4">
+<h4 class="anchored" data-anchor-id="create-table-displaying-covariate-balance-using-cobaltbal.tab">Create table displaying covariate balance using <code>cobalt::bal.tab()</code></h4>
 <p>📜 <a href="https://ngreifer.github.io/cobalt/">Documentation - cobalt</a></p>
 <p>Use <code>bal.tab()</code> to report balance before and after matching.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># bal.tab( *** ) </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bal.tab</span>(propensity_scores, </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">var.names =</span> new_names) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>2E.Q1</strong> Compare Mahalanobis vs propensity score matching. Which method did a better job at achieving balance?</p>
 <p><em>Response:</em> _________________________</p>
+<hr>
 </section>
-<section id="f.-estimate-an-effect-in-the-matched-sample" class="level3">
-<h3 class="anchored" data-anchor-id="f.-estimate-an-effect-in-the-matched-sample">2F. Estimate an effect in the matched sample</h3>
-<p>Using the matched sample (Mahalanobis method), estimate the effect of treatment on the change in incumbent vote share (<code>change_liberal</code>).</p>
+<section id="f.-estimate-an-effect-in-the-matched-sample" class="level4">
+<h4 class="anchored" data-anchor-id="f.-estimate-an-effect-in-the-matched-sample">2F. Estimate an effect in the matched sample</h4>
+<p>Using the matched data (Mahalanobis method), estimate the effect of treatment on the change in incumbent vote share (<code>change_liberal</code>).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>reg_match <span class="ot">&lt;-</span> </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -391,11 +405,13 @@ window.Quarto = {
 <p><em>Response:</em> _________________________</p>
 <hr>
 </section>
+</section>
 <section id="part-3-panel-data-fixed-effects-and-difference-in-difference" class="level3">
 <h3 class="anchored" data-anchor-id="part-3-panel-data-fixed-effects-and-difference-in-difference">Part 3: Panel Data, Fixed Effects, and Difference-in-Difference</h3>
 <p><strong>Data source:</strong> <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SDUGCC">Dataverse-Stokes2015</a></p>
 <hr>
-<p><strong>3A:</strong> Read in the panel data. Code variables <code>precinct_id</code> and <code>year</code> as factors.</p>
+<section id="a-read-in-the-panel-data-code-variables-precinct_id-and-year-as-factors" class="level4">
+<h4 class="anchored" data-anchor-id="a-read-in-the-panel-data-code-variables-precinct_id-and-year-as-factors"><strong>3A:</strong> Read in the panel data + code variables <code>precinct_id</code> and <code>year</code> as factors</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>panel_data <span class="ot">&lt;-</span> </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -411,10 +427,20 @@ window.Quarto = {
 <p><strong>3A.Q2:</strong> How many unique precincts are <em>ever treated</em> (i.e., <code>proposed</code> &amp; <code>operational</code>)?</p>
 <p><em>Response:</em> _________________________</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>panel_data <span class="sc">%&gt;%</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>panel_data <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(precinct_id) <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ever_proposed    =</span> <span class="fu">any</span>(proposed_turbine <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">ever_operational =</span> <span class="fu">any</span>(operational_turbine <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_ever_proposed    =</span> <span class="fu">sum</span>(ever_proposed),</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_ever_operational =</span> <span class="fu">sum</span>(ever_operational))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <hr>
-<p><strong>3B.</strong> Plot and evaluate parallel trends: Replicate <code>Figure.2</code> (Stokes, 2015)</p>
+</section>
+<section id="b.-plot-and-evaluate-parallel-trends-replicate-figure.2-stokes-2015" class="level4">
+<h4 class="anchored" data-anchor-id="b.-plot-and-evaluate-parallel-trends-replicate-figure.2-stokes-2015"><strong>3B.</strong> Plot and evaluate parallel trends: Replicate <code>Figure.2</code> (Stokes, 2015)</h4>
 <ol type="1">
 <li>Create indicators for whether each precinct is ever treated by 2011 (<code>treat_p</code>, <code>treat_o</code>; separate indicator for proposals and operational turbines).</li>
 <li>Plot mean incumbent vote share by year for treated vs control precincts (with 95% CIs).</li>
@@ -422,15 +448,58 @@ window.Quarto = {
 </ol>
 <p>Step 1: Prepare data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>trends_data <span class="ot">&lt;-</span> panel_data <span class="sc">%&gt;%</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>trends_data <span class="ot">&lt;-</span> panel_data <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(precinct_id) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">treat_p =</span> <span class="fu">as.integer</span>(<span class="fu">any</span>(proposed_turbine <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),  <span class="co"># ever proposed (in any year)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">treat_o =</span> <span class="fu">as.integer</span>(<span class="fu">any</span>(operational_turbine <span class="sc">==</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))) <span class="sc">%&gt;%</span> <span class="co"># ever operational (in any year)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">c</span>(treat_p, treat_o),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"turbine_type"</span>, <span class="at">values_to =</span> <span class="st">"treat"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">turbine_type =</span> <span class="fu">factor</span>(turbine_type,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                            <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"treat_p"</span>, <span class="st">"treat_o"</span>),</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                            <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Proposed turbines"</span>, <span class="st">"Operational turbines"</span>)),  </span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">status =</span> <span class="fu">if_else</span>(treat <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"Treated"</span>, <span class="st">"Control"</span>),</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">year   =</span> <span class="fu">factor</span>(year))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Step 2: Create trends plot</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add plot code</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>pd <span class="ot">&lt;-</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.15</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>trends_data <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(turbine_type, status, year) <span class="sc">%&gt;%</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(perc_lib, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">n    =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(perc_lib)),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">se   =</span> <span class="fu">sd</span>(perc_lib, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> <span class="fu">sqrt</span>(n), </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">ci   =</span> <span class="fu">qt</span>(.<span class="dv">975</span>, <span class="at">df =</span> <span class="fu">pmax</span>(n <span class="sc">-</span> <span class="dv">1</span>, <span class="dv">1</span>)) <span class="sc">*</span> se,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">aes</span>(year, mean, <span class="at">color =</span> status, <span class="at">group =</span> status)) <span class="sc">+</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">position =</span> pd, <span class="at">linewidth =</span> <span class="fl">1.2</span>) <span class="sc">+</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">position =</span> pd, <span class="at">size =</span> <span class="fl">2.6</span>) <span class="sc">+</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">ymin =</span> mean <span class="sc">-</span> ci, <span class="at">ymax =</span> mean <span class="sc">+</span> ci),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> pd, <span class="at">width =</span> .<span class="dv">12</span>, <span class="at">linewidth =</span> .<span class="dv">7</span>, <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> turbine_type, <span class="at">nrow =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">Control =</span> <span class="st">"#0072B2"</span>, <span class="at">Treated =</span> <span class="st">"#B22222"</span>)) <span class="sc">+</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">percent_format</span>(<span class="at">accuracy =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(<span class="at">ylim =</span> <span class="fu">c</span>(.<span class="dv">20</span>, .<span class="dv">57</span>)) <span class="sc">+</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Figure 2. Trends in the Governing Party’s Vote Share"</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Election Year"</span>,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Liberal Party Vote Share"</span>,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">14</span>) <span class="sc">+</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><strong>3B.Q1:</strong> Write a short paragraph assessing the parallel trends assumption for each outcome.</p>
 <p><em>Response (4-6 sentences):</em> _________________________</p>
 <hr>
+</section>
 </section>
 <section id="estimating-fixed-effects-models-did-for-proposals" class="level3">
 <h3 class="anchored" data-anchor-id="estimating-fixed-effects-models-did-for-proposals">Estimating Fixed Effects Models (DiD) for proposals</h3>
@@ -475,7 +544,9 @@ window.Quarto = {
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>sample_40_precincts <span class="ot">&lt;-</span> panel_data <span class="sc">%&gt;%</span></span>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(ids_40, <span class="at">by =</span> <span class="st">"precinct_id"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p><strong>3C:</strong> Estimate a fixed effects model using <code>lm()</code> with fixed effects added for <code>precinct</code> and <code>year</code></p>
+<hr>
+<section id="c-estimate-a-fixed-effects-model-using-lm-with-fixed-effects-added-for-precinct-and-year-using-the-sample-of-40-precincts-just-created." class="level4">
+<h4 class="anchored" data-anchor-id="c-estimate-a-fixed-effects-model-using-lm-with-fixed-effects-added-for-precinct-and-year-using-the-sample-of-40-precincts-just-created."><strong>3C:</strong> Estimate a fixed effects model using <code>lm()</code> with fixed effects added for <code>precinct</code> and <code>year</code> using the sample of 40 precincts just created.</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>model1_ff <span class="ot">&lt;-</span> </span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -496,7 +567,9 @@ window.Quarto = {
 <p><strong>3C.Q4:</strong> In your own words, explain why it is advantageous from a causal inference perspective to include year and precinct fixed effects. Explain how between-level and within-level variance is relevant to the problem of omitted variable bias (OVB).</p>
 <p><em>Response (2-4 sentences):</em> _________________________</p>
 <hr>
-<p><strong>3D.</strong> Now using the full sample, estimate the treatment effect of wind turbine proposals on incumbent vote share. Use <code>feols()</code> from the <code>{fixest}</code> package to estimate the fixed effects.</p>
+</section>
+<section id="d.-now-using-the-full-sample-estimate-the-treatment-effect-of-wind-turbine-proposals-on-incumbent-vote-share.-use-feols-from-the-fixest-package-to-estimate-the-fixed-effects." class="level4">
+<h4 class="anchored" data-anchor-id="d.-now-using-the-full-sample-estimate-the-treatment-effect-of-wind-turbine-proposals-on-incumbent-vote-share.-use-feols-from-the-fixest-package-to-estimate-the-fixed-effects."><strong>3D.</strong> Now using the full sample, estimate the treatment effect of wind turbine proposals on incumbent vote share. Use <code>feols()</code> from the <code>{fixest}</code> package to estimate the fixed effects.</h4>
 <p>See vignette here: <a href="https://cran.r-project.org/web/packages/fixest/vignettes/fixest_walkthrough.html#11_Estimation">fixest walkthrough</a></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>model2_ff <span class="ot">&lt;-</span> </span>
@@ -507,7 +580,9 @@ window.Quarto = {
 <p>In panel data settings, why is clustering by precinct important (i.e., <code>cluster = ~precinct_id</code>) ?”</p>
 <p><em>Response (4-6 sentences):</em> _________________________</p>
 <hr>
-<p><strong>3E.</strong> Estimate the treatment effect of <em>operational wind turbines</em> on incumbent vote share. Use the same approach as the previous model.</p>
+</section>
+<section id="e.-estimate-the-treatment-effect-of-operational-wind-turbines-on-incumbent-vote-share.-use-the-same-approach-as-the-previous-model." class="level4">
+<h4 class="anchored" data-anchor-id="e.-estimate-the-treatment-effect-of-operational-wind-turbines-on-incumbent-vote-share.-use-the-same-approach-as-the-previous-model."><strong>3E.</strong> Estimate the treatment effect of <em>operational wind turbines</em> on incumbent vote share. Use the same approach as the previous model.</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>model3_ff <span class="ot">&lt;-</span> </span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -518,6 +593,7 @@ window.Quarto = {
 <p><strong>3E.Q2:</strong> Why do you think the effect of proposed wind turbines is different from operational wind turbines. Develop your own theory about why incumbent vote share is affected in this way. Use the Stokes (2015) study to inform your response as needed.</p>
 <p><em>Response:</em> _________________________</p>
 <hr>
+</section>
 </section>
 
 </main>
